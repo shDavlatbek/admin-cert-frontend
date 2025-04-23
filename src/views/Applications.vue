@@ -55,17 +55,76 @@
         </div>
       </template>
       <template #content>
+        <!-- Filters Section -->
+        <div class="filters-section">
+          <div class="filter-container">
+            <span class="p-input-icon-left search-input">
+              
+              <InputText v-model="filters.searchWord" 
+                         :placeholder="$t('search')" 
+                         @input="applyFiltersDebounced"
+                         class="p-inputtext-sm"/>
+            </span>
+          </div>
+          
+          <div class="filter-container">
+            <Dropdown v-model="filters.status" 
+                      :options="statusOptions" 
+                      :placeholder="$t('status')"
+                      optionLabel="label" 
+                      optionValue="value"
+                      @change="applyFilters"
+                      class="p-inputtext-sm filter-dropdown" />
+          </div>
+          
+          <div class="filter-container">
+            <Dropdown v-model="filters.region_id" 
+                      :options="regionOptions" 
+                      :placeholder="$t('region')"
+                      optionLabel="label" 
+                      optionValue="value"
+                      @change="applyFilters"
+                      :loading="regionsLoading"
+                      class="p-inputtext-sm filter-dropdown" />
+          </div>
+          
+          <div class="filter-container">
+            <Button icon="pi pi-filter-slash" 
+                   :label="$t('clear_filters')" 
+                   class="p-button-outlined p-button-sm"
+                   @click="clearFilters" />
+          </div>
+        </div>
+        
         <div v-if="loading" class="loading-container">
           <ProgressSpinner />
         </div>
-        <DataTable v-else :value="applications" :paginator="true" :rows="10" 
-                  responsiveLayout="scroll" stripedRows class="applications-table"
-                  :rowHover="true" currentPageReportTemplate="{first} - {last} / {totalRecords}"
-                  paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown">
+        <DataTable v-else :value="applications" 
+                  :lazy="true"
+                  :paginator="true" 
+                  :rows="rowsPerPage"
+                  :totalRecords="totalRecords"
+                  :rowsPerPageOptions="[5, 10, 20, 50]"
+                  v-model:first="first"
+                  v-model:rows="rowsPerPage"
+                  @page="onPage($event)"
+                  :loading="loading"
+                  responsiveLayout="scroll" 
+                  stripedRows 
+                  class="applications-table"
+                  :rowHover="true" 
+                  currentPageReportTemplate="{first}-{last} / {totalRecords}"
+                  paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                  @row-click="onRowClick" 
+                  selectionMode="single">
           <Column field="application_number" :header="$t('application_number')" sortable></Column>
           <Column field="first_name" :header="$t('first_name')" sortable></Column>
           <Column field="sur_name" :header="$t('surname')" sortable></Column>
-          <Column field="phone_number" :header="$t('phone')" sortable></Column>
+          <Column field="organization.name_uz" :header="$t('organization_name')">
+            <template #body="slotProps">
+              {{ slotProps.data && slotProps.data.organization && slotProps.data.organization.name_uz || '-' }}
+            </template>
+          </Column>
           <Column field="status" :header="$t('status')" sortable>
             <template #body="slotProps">
               <span class="status-badge" :class="slotProps.data.status">
@@ -123,7 +182,108 @@
       </div>
       <template #footer>
         <Button :label="$t('close')" icon="pi pi-times" @click="showCertDialog = false" class="p-button-text" />
-        <Button :label="$t('download_certificate')" icon="pi pi-download" autofocus class="p-button-success" @click="downloadCertificate" />
+        <Button :label="$t('download_certificate')" icon="pi pi-download" autofocus class="p-button-success" 
+               @click="downloadCertificate" :loading="downloadLoading" :disabled="downloadLoading" />
+      </template>
+    </Dialog>
+
+    <!-- New Application Detail Dialog -->
+    <Dialog v-model:visible="showDetailDialog" :header="$t('application_details')" :style="{width: '650px'}" :modal="true" class="application-detail-dialog">
+      <div v-if="selectedApplication" class="application-detail-container">
+        <div class="application-header">
+          <div class="application-badge">
+            <img v-if="selectedApplication.badge_img" :src="getImageUrl(selectedApplication.badge_img)" alt="Badge" class="badge-image" />
+            <i v-else class="pi pi-user" style="font-size: 3rem"></i>
+          </div>
+          <div class="application-header-info">
+            <h2>{{ selectedApplication.first_name }} {{ selectedApplication.sur_name }}</h2>
+            <div class="application-id">#{{ selectedApplication.application_number }}</div>
+            <span class="status-badge" :class="selectedApplication.status">
+              {{ $t(selectedApplication.status) }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="application-body">
+          <div class="detail-section">
+            <h3>{{ $t('personal_information') }}</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('first_name') }}</span>
+                <span class="detail-value">{{ selectedApplication.first_name }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('surname') }}</span>
+                <span class="detail-value">{{ selectedApplication.sur_name }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('middle_name') }}</span>
+                <span class="detail-value">{{ selectedApplication.middle_name || '-' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('tin') }}</span>
+                <span class="detail-value">{{ selectedApplication.tin || '-' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('phone') }}</span>
+                <span class="detail-value">{{ selectedApplication && selectedApplication.phone_number || '-' }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-section">
+            <h3>{{ $t('organization_information') }}</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('organization_name') }}</span>
+                <span class="detail-value">{{ selectedApplication && selectedApplication.organization && selectedApplication.organization.name_uz || '-' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('region') }}</span>
+                <span class="detail-value">{{ selectedApplication && selectedApplication.organization && selectedApplication.organization.region && selectedApplication.organization.region.name_uz || '-' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('inn') }}</span>
+                <span class="detail-value">{{ selectedApplication && selectedApplication.organization && selectedApplication.organization.inn || '-' }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-section">
+            <h3>{{ $t('application_information') }}</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('application_number') }}</span>
+                <span class="detail-value">#{{ selectedApplication.application_number }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('application_type') }}</span>
+                <span class="detail-value">{{ $t(selectedApplication.application_type) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('status') }}</span>
+                <span class="detail-value status-text" :class="selectedApplication.status">{{ $t(selectedApplication.status) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('created') }}</span>
+                <span class="detail-value">{{ formatDate(selectedApplication.createdAt) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('updated') }}</span>
+                <span class="detail-value">{{ formatDate(selectedApplication.updatedAt) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <Button :label="$t('close')" icon="pi pi-times" @click="showDetailDialog = false" class="p-button-text" />
+        <div v-if="selectedApplication && selectedApplication.status === 'new'" class="footer-actions">
+          <Button :label="$t('accept')" icon="pi pi-check" @click="acceptApplication(selectedApplication); showDetailDialog = false" class="p-button-success" />
+          <Button :label="$t('reject')" icon="pi pi-times" @click="cancelApplication(selectedApplication); showDetailDialog = false" class="p-button-danger" />
+        </div>
+        <Button v-if="selectedApplication && selectedApplication.status === 'accepted'" :label="$t('certify')" icon="pi pi-id-card" 
+               @click="createCertificate(selectedApplication); showDetailDialog = false" class="p-button-info" />
       </template>
     </Dialog>
   </div>
@@ -142,15 +302,118 @@ export default {
     const i18n = inject('i18n')
     
     const loading = ref(true)
-    const applications = computed(() => store.state.applications)
+    const regionsLoading = ref(true)
+    const applications = ref([])
     const stats = computed(() => store.getters.getApplicationStats)
+    const regions = computed(() => store.state.regions)
+    
+    // Pagination
+    const first = ref(0)
+    const rowsPerPage = ref(10)
+    const totalRecords = ref(0)
     
     const showCertDialog = ref(false)
     const certDetails = ref({})
+    const downloadLoading = ref(false)
+    
+    // New refs for application details dialog
+    const showDetailDialog = ref(false)
+    const selectedApplication = ref(null)
+    
+    // Filter state
+    const filters = ref({
+      searchWord: '',
+      status: null,
+      region_id: null
+    })
+    
+    // Status options for dropdown
+    const statusOptions = [
+      { label: i18n.t('all_statuses'), value: null },
+      { label: i18n.t('new'), value: 'new' },
+      { label: i18n.t('accepted'), value: 'accepted' },
+      { label: i18n.t('done'), value: 'done' },
+      { label: i18n.t('cancelled'), value: 'cancelled' }
+    ]
+    
+    // Region options for dropdown, built from fetched regions
+    const regionOptions = computed(() => {
+      const options = [{ label: i18n.t('all_regions'), value: null }]
+      if (regions.value && regions.value.length) {
+        regions.value.forEach(region => {
+          options.push({
+            label: region.name_uz, // Using Uzbek name by default
+            value: region.region_id
+          })
+        })
+      }
+      return options
+    })
+    
+    // Debounce function for search input
+    let debounceTimer
+    const applyFiltersDebounced = () => {
+      clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(() => {
+        applyFilters()
+      }, 300)
+    }
+    
+    // Apply filters and fetch data
+    const applyFilters = async () => {
+      loading.value = true
+      
+      const offset = first.value
+      
+      const result = await store.dispatch('fetchApplications', { 
+        searchWord: filters.value.searchWord,
+        status: filters.value.status,
+        region_id: filters.value.region_id,
+        offset: offset,
+        limit: rowsPerPage.value
+      })
+      
+      applications.value = result.data
+      totalRecords.value = result.totalRecords
+      
+      loading.value = false
+    }
+    
+    // Handle pagination
+    const onPage = (event) => {
+      first.value = event.first
+      rowsPerPage.value = event.rows
+      applyFilters()
+    }
+    
+    // Clear all filters
+    const clearFilters = () => {
+      filters.value = {
+        searchWord: '',
+        status: null,
+        region_id: null
+      }
+      first.value = 0
+      applyFilters()
+    }
     
     onMounted(async () => {
       loading.value = true
-      await store.dispatch('fetchApplications')
+      regionsLoading.value = true
+      
+      // Fetch regions
+      await store.dispatch('fetchRegions')
+      regionsLoading.value = false
+      
+      // Fetch applications with pagination
+      const result = await store.dispatch('fetchApplications', {
+        offset: 0,
+        limit: rowsPerPage.value
+      })
+      
+      applications.value = result.data
+      totalRecords.value = result.totalRecords
+      
       loading.value = false
     })
     
@@ -158,6 +421,16 @@ export default {
       if (!dateString) return 'N/A'
       const date = new Date(dateString)
       return date.toLocaleDateString()
+    }
+    
+    const getImageUrl = (imagePath) => {
+      if (!imagePath) return '';
+      return `${store.state.baseUrl}/api/cdn/${imagePath}`;
+    }
+    
+    const onRowClick = (event) => {
+      selectedApplication.value = event.data;
+      showDetailDialog.value = true;
     }
     
     const acceptApplication = async (application) => {
@@ -169,6 +442,13 @@ export default {
         })
         
         if (success) {
+          // Immediately update the local application status
+          const appIndex = applications.value.findIndex(app => app.application_id === application.application_id)
+          if (appIndex !== -1) {
+            applications.value[appIndex].status = 'accepted'
+            applications.value[appIndex].updatedAt = new Date().toISOString()
+          }
+          
           toast.add({
             severity: 'success',
             summary: i18n.t('success'),
@@ -197,6 +477,13 @@ export default {
         })
         
         if (success) {
+          // Immediately update the local application status
+          const appIndex = applications.value.findIndex(app => app.application_id === application.application_id)
+          if (appIndex !== -1) {
+            applications.value[appIndex].status = 'cancelled'
+            applications.value[appIndex].updatedAt = new Date().toISOString()
+          }
+          
           toast.add({
             severity: 'info',
             summary: i18n.t('success'),
@@ -222,6 +509,13 @@ export default {
         const certificateData = await store.dispatch('createCertificate', application.application_id)
         
         if (certificateData) {
+          // Immediately update the local application status
+          const appIndex = applications.value.findIndex(app => app.application_id === application.application_id)
+          if (appIndex !== -1) {
+            applications.value[appIndex].status = 'done'
+            applications.value[appIndex].updatedAt = new Date().toISOString()
+          }
+          
           certDetails.value = certificateData
           showCertDialog.value = true
           
@@ -244,29 +538,86 @@ export default {
       }
     }
     
-    const downloadCertificate = () => {
-      toast.add({
-        severity: 'info',
-        summary: i18n.t('success'),
-        detail: i18n.t('certificate_download_started'),
-        life: 3000
-      })
+    const downloadCertificate = async () => {
+      if (!certDetails.value.certificate_id) {
+        toast.add({
+          severity: 'error',
+          summary: i18n.t('error'),
+          detail: i18n.t('certificate_not_found'),
+          life: 3000
+        })
+        return
+      }
       
-      // Close the dialog
-      showCertDialog.value = false
+      downloadLoading.value = true
+      
+      try {
+        const success = await store.dispatch('downloadCertificate', {
+          certificateId: certDetails.value.certificate_id,
+          firstName: certDetails.value.first_name,
+          lastName: certDetails.value.sur_name
+        })
+        
+        if (success) {
+          toast.add({
+            severity: 'success',
+            summary: i18n.t('success'),
+            detail: i18n.t('certificate_download_started'),
+            life: 3000
+          })
+          
+          // Close the dialog after successful download
+          showCertDialog.value = false
+        } else {
+          toast.add({
+            severity: 'error',
+            summary: i18n.t('error'),
+            detail: i18n.t('download_failed'),
+            life: 3000
+          })
+        }
+      } catch (error) {
+        console.error('Download error:', error)
+        toast.add({
+          severity: 'error',
+          summary: i18n.t('error'),
+          detail: i18n.t('download_failed'),
+          life: 3000
+        })
+      } finally {
+        downloadLoading.value = false
+      }
     }
     
     return {
       loading,
+      regionsLoading,
       applications,
       stats,
+      // Pagination
+      first,
+      rowsPerPage,
+      totalRecords,
+      onPage,
       showCertDialog,
       certDetails,
       formatDate,
       acceptApplication,
       cancelApplication,
       createCertificate,
-      downloadCertificate
+      downloadCertificate,
+      downloadLoading,
+      showDetailDialog,
+      selectedApplication,
+      onRowClick,
+      getImageUrl,
+      // Filter-related
+      filters,
+      statusOptions,
+      regionOptions,
+      applyFilters,
+      applyFiltersDebounced,
+      clearFilters
     }
   }
 }
@@ -461,6 +812,180 @@ export default {
   
   .certificate-field .label {
     margin-bottom: 0.25rem;
+  }
+}
+
+/* Application Detail Dialog Styles */
+.application-detail-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.application-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.application-badge {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.badge-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.application-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.application-header-info h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1e293b;
+}
+
+.application-id {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.application-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.detail-section h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: #1e293b;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.detail-value {
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.status-text {
+  text-transform: capitalize;
+}
+
+.status-text.new {
+  color: #0284c7;
+}
+
+.status-text.accepted {
+  color: #16a34a;
+}
+
+.status-text.done {
+  color: #9333ea;
+}
+
+.status-text.cancelled {
+  color: #dc2626;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+:deep(.application-detail-dialog .p-dialog-content) {
+  padding: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 767.98px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .application-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+/* Filter styles */
+.filters-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  align-items: center;
+}
+
+.filter-container {
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-input {
+  width: 100%;
+}
+
+.search-input :deep(input) {
+  width: 100%;
+}
+
+.filter-dropdown {
+  width: 100%;
+}
+
+@media (max-width: 767.98px) {
+  .filters-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-container {
+    width: 100%;
   }
 }
 </style> 

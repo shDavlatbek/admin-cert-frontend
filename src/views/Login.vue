@@ -3,7 +3,7 @@
     <Card class="login-card">
       <template #header>
         <div class="login-header">
-          <img src="http://study.madaniyhayot.uz/assets/logo-67a6f6ec.png" alt="Logo" class="login-logo" />
+          <!-- <img src="http://study.madaniyhayot.uz/assets/logo-67a6f6ec.png" alt="Logo" class="login-logo" /> -->
           <h1 class="login-title">{{ $t('app_name') }}</h1>
         </div>
       </template>

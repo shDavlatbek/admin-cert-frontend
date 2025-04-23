@@ -6,6 +6,7 @@ import Login from '../views/Login.vue'
 import Dashboard from '../views/Dashboard.vue'
 import CertifiedUsers from '../views/CertifiedUsers.vue'
 import Applications from '../views/Applications.vue'
+import Organizations from '../views/Organizations.vue'
 
 const routes = [
   {
@@ -33,6 +34,12 @@ const routes = [
         path: 'applications',
         name: 'Applications',
         component: Applications,
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'organizations',
+        name: 'Organizations',
+        component: Organizations,
         meta: { requiresAuth: true }
       }
     ]

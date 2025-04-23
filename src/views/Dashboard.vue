@@ -3,7 +3,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo-container">
-          <img src="http://study.madaniyhayot.uz/assets/logo-67a6f6ec.png" alt="Logo" class="sidebar-logo" />
+          <!-- <img src="http://study.madaniyhayot.uz/assets/logo-67a6f6ec.png" alt="Logo" class="sidebar-logo" /> -->
           <h2>{{ $t('app_name') }}</h2>
         </div>
         <Button icon="pi pi-bars" class="p-button-rounded p-button-text sidebar-toggle" @click="toggleSidebar" />
@@ -28,6 +28,12 @@
             <router-link to="/certified-users" class="nav-link">
               <i class="pi pi-users"></i>
               <span>{{ $t('certified_users') }}</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/organizations" class="nav-link">
+              <i class="pi pi-building"></i>
+              <span>{{ $t('organizations') }}</span>
             </router-link>
           </li>
           <li>
@@ -68,6 +74,7 @@ export default {
       const routeName = route.name
       if (routeName === 'Applications') return 'applications'
       if (routeName === 'CertifiedUsers') return 'certified_users'
+      if (routeName === 'Organizations') return 'organizations'
       return 'dashboard'
     })
     

@@ -197,16 +197,51 @@ export default {
       showCertDialog.value = true
     }
     
-    const downloadCertificate = () => {
-      toast.add({
-        severity: 'info',
-        summary: i18n.t('success'),
-        detail: i18n.t('certificate_download_started'),
-        life: 3000
-      })
+    const downloadCertificate = async () => {
+      if (!selectedCertificate.value || !selectedCertificate.value.certificate_id) {
+        toast.add({
+          severity: 'error',
+          summary: i18n.t('error'),
+          detail: i18n.t('certificate_not_found'),
+          life: 3000
+        })
+        return
+      }
       
-      // Close the dialog
-      showCertDialog.value = false
+      try {
+        const success = await store.dispatch('downloadCertificate', {
+          certificateId: selectedCertificate.value.certificate_id,
+          firstName: selectedCertificate.value.first_name,
+          lastName: selectedCertificate.value.sur_name
+        })
+        
+        if (success) {
+          toast.add({
+            severity: 'success',
+            summary: i18n.t('success'),
+            detail: i18n.t('certificate_download_started'),
+            life: 3000
+          })
+          
+          // Close the dialog
+          showCertDialog.value = false
+        } else {
+          toast.add({
+            severity: 'error',
+            summary: i18n.t('error'),
+            detail: i18n.t('download_failed'),
+            life: 3000
+          })
+        }
+      } catch (error) {
+        console.error('Download error:', error)
+        toast.add({
+          severity: 'error',
+          summary: i18n.t('error'),
+          detail: i18n.t('download_failed'),
+          life: 3000
+        })
+      }
     }
     
     return {

@@ -4,6 +4,7 @@ export default {
   dashboard: 'Bosh sahifa',
   applications: 'Arizalar',
   certificates: 'Sertifikatlar',
+  organizations: 'Tashkilotlar',
   logout: 'Chiqish',
   profile: 'Profil',
   settings: 'Sozlamalar',
@@ -31,7 +32,29 @@ export default {
   phone: 'Telefon raqami',
   status: 'Holati',
   created: 'Yaratilgan sana',
+  updated: 'Yangilangan sana',
   actions: 'Amallar',
+  
+  // Filters
+  search: 'Qidirish',
+  clear_filters: 'Filtrlarni tozalash',
+  all_statuses: 'Barcha holatlar',
+  all_regions: 'Barcha viloyatlar',
+  region: 'Viloyat',
+  
+  // Application Details
+  application_details: 'Ariza tafsilotlari',
+  application_information: 'Ariza ma\'lumotlari',
+  personal_information: 'Shaxsiy ma\'lumotlar',
+  organization_information: 'Tashkilot ma\'lumotlari',
+  organization_name: 'Tashkilot nomi',
+  application_type: 'Ariza turi',
+  tin: 'STIR',
+  inn: 'STIR',
+  certificate: 'Sertifikat',
+  
+  // User Details
+  user_details: 'Foydalanuvchi tafsilotlari',
   
   // Application Status
   new: 'Yangi',
@@ -51,7 +74,12 @@ export default {
   certificate_created: 'Sertifikat yaratildi',
   certificate_created_success: 'Sertifikat muvaffaqiyatli yaratildi',
   download_certificate: 'Sertifikatni yuklab olish',
+  download_all: 'Hammasini yuklab olish',
   certificate_download_started: 'Sertifikat yuklab olish boshlandi',
+  certificates_download_started: 'Sertifikatlar yuklab olish boshlandi',
+  download_failed: 'Sertifikatni yuklab olishda xatolik yuz berdi',
+  no_certificates_to_download: 'Yuklab olish uchun sertifikatlar mavjud emas',
+  certificate_not_found: 'Sertifikat topilmadi',
   name: 'To\'liq ism',
   pin: 'PIN',
   issue_date: 'Berilgan sana',
@@ -78,7 +106,6 @@ export default {
   // Certificates page
   all_certificates: 'Barcha sertifikatlar',
   certified_users: 'Sertifikat egalari',
-  search: 'Qidirish',
   certificate_number: 'Sertifikat raqami',
   certificate_details: 'Sertifikat tafsilotlari',
   valid_until: 'Amal qilish muddati',
@@ -106,5 +133,50 @@ export default {
   next: 'Keyingi',
   loading: 'Yuklanmoqda...',
   collapse: 'Yopish',
-  more: 'ko\'proq'
+  more: 'ko\'proq',
+  
+  // Pagination
+  items_per_page: 'Sahifadagi yozuvlar',
+  showing: 'Ko\'rsatilmoqda',
+  of: 'dan',
+  to: 'gacha',
+  
+  // Organizations
+  organization_details: 'Tashkilot tafsilotlari',
+  organization_name_uz: 'Tashkilot nomi (UZ)',
+  organization_name_ru: 'Tashkilot nomi (RU)',
+  organization_name_en: 'Tashkilot nomi (EN)',
+  cadastral_number: 'Kadastr raqami',
+  global_id: 'Global ID',
+  additional_information: 'Qo\'shimcha ma\'lumotlar',
+  direction_uz: 'Yo\'nalish (UZ)',
+  direction_ru: 'Yo\'nalish (RU)',
+  direction_en: 'Yo\'nalish (EN)',
+  id: 'ID',
+  add_new: 'Yangi qo\'shish',
+  add_organization: 'Yangi tashkilot qo\'shish',
+  organization_name_required: 'Tashkilot nomi kiritilishi shart',
+  inn_required: 'STIR kiritilishi shart',
+  global_id_required: 'Global ID kiritilishi shart',
+  region_required: 'Viloyat tanlash shart',
+  select_region: 'Viloyatni tanlang',
+  organization_added_successfully: 'Tashkilot muvaffaqiyatli qo\'shildi',
+  failed_to_add_organization: 'Tashkilotni qo\'shishda xatolik yuz berdi',
+  required_fields_missing: 'Barcha majburiy maydonlarni to\'ldiring',
+  
+  // Organization Edit and Delete
+  edit_organization: 'Tashkilotni tahrirlash',
+  organization_updated_successfully: 'Tashkilot muvaffaqiyatli yangilandi',
+  failed_to_update_organization: 'Tashkilotni yangilashda xatolik yuz berdi',
+  confirm_delete: 'O\'chirishni tasdiqlash',
+  delete_organization_confirmation: '{name} tashkilotini o\'chirishni istaysizmi?',
+  organization_deleted_successfully: 'Tashkilot muvaffaqiyatli o\'chirildi',
+  failed_to_delete_organization: 'Tashkilotni o\'chirishda xatolik yuz berdi',
+  name_uz: 'Nomi (UZ)',
+  name_ru: 'Nomi (RU)',
+  name_en: 'Nomi (EN)',
+  field_required: 'Maydon to\'ldirilishi shart',
+  
+  // Fetch errors
+  fetch_users_failed: 'Foydalanuvchilarni yuklab olishda xatolik yuz berdi'
 } 
